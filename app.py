@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 
 st.set_page_config(page_title="Healthcare Prediction", layout="wide")
-st.title("🏥 Healthcare Disease Prediction System")
+st.title("🏥 Heart Disease Prediction System")
 
 # ------------------------------------------------
 # 1️⃣ DATASET WRITTEN DIRECTLY INSIDE THE CODE
