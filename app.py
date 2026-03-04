@@ -1,6 +1,6 @@
 # =========================================
-# BREAST CANCER PREDICTION WEB APP
-# Streamlit Version
+# HEALTHCARE DISEASE PREDICTION
+# Dataset Written Manually Inside Code
 # =========================================
 
 import streamlit as st
@@ -8,30 +8,36 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 
-from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 
-# -----------------------------
-# Page Config
-# -----------------------------
-st.set_page_config(page_title="Healthcare Prediction App", layout="wide")
+st.set_page_config(page_title="Healthcare Prediction", layout="wide")
+st.title("🏥 Healthcare Disease Prediction System")
 
-st.title("🏥 Breast Cancer Prediction System")
-st.write("Machine Learning-based Healthcare Prediction Web Application")
+# ------------------------------------------------
+# 1️⃣ DATASET WRITTEN DIRECTLY INSIDE THE CODE
+# ------------------------------------------------
 
-# -----------------------------
-# Load Dataset
-# -----------------------------
-data = load_breast_cancer()
+data = pd.DataFrame({
+    "age": [25, 45, 60, 35, 50, 65, 40, 70, 55, 30],
+    "blood_pressure": [120, 140, 160, 130, 150, 170, 135, 180, 155, 110],
+    "cholesterol": [180, 220, 250, 200, 240, 260, 210, 280, 230, 190],
+    "max_heart_rate": [150, 140, 130, 160, 145, 120, 155, 110, 135, 165],
+    "blood_sugar": [90, 110, 150, 100, 140, 160, 105, 170, 130, 95],
+    "disease": [0, 1, 1, 0, 1, 1, 0, 1, 1, 0]
+})
 
-X = pd.DataFrame(data.data, columns=data.feature_names)
-y = pd.Series(data.target)
+st.subheader("📊 Healthcare Dataset")
+st.dataframe(data)
 
-# -----------------------------
-# Train Model
-# -----------------------------
+# ------------------------------------------------
+# 2️⃣ TRAIN MODEL
+# ------------------------------------------------
+
+X = data.drop("disease", axis=1)
+y = data["disease"]
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
@@ -45,68 +51,41 @@ model.fit(X_train, y_train)
 
 accuracy = model.score(X_test, y_test)
 
-st.sidebar.header("Model Information")
-st.sidebar.write(f"Model Accuracy: **{accuracy:.2f}**")
+st.sidebar.header("Model Accuracy")
+st.sidebar.write(f"Accuracy: **{accuracy:.2f}**")
 
-# -----------------------------
-# Data Visualization Section
-# -----------------------------
-st.subheader("📊 Dataset Overview")
+# ------------------------------------------------
+# 3️⃣ VISUALIZATION
+# ------------------------------------------------
 
-col1, col2 = st.columns(2)
+st.subheader("📈 Age Distribution")
+fig = px.histogram(data, x="age", color="disease",
+                   title="Age vs Disease")
+st.plotly_chart(fig)
 
-with col1:
-    fig = px.histogram(X, x="mean radius", title="Distribution of Mean Radius")
-    st.plotly_chart(fig)
+# ------------------------------------------------
+# 4️⃣ USER INPUT FOR PREDICTION
+# ------------------------------------------------
 
-with col2:
-    target_df = pd.DataFrame({"Diagnosis": y})
-    fig2 = px.histogram(target_df, x="Diagnosis",
-                        title="Cancer Diagnosis Distribution")
-    st.plotly_chart(fig2)
+st.subheader("🔍 Enter Patient Details")
 
-# -----------------------------
-# Prediction Section
-# -----------------------------
-st.subheader("🔍 Enter Patient Details for Prediction")
-
-input_data = []
-
-for feature in data.feature_names:
-    value = st.number_input(f"{feature}", float(X[feature].min()),
-                            float(X[feature].max()),
-                            float(X[feature].mean()))
-    input_data.append(value)
+age = st.number_input("Age", 20, 80, 40)
+bp = st.number_input("Blood Pressure", 90, 200, 130)
+chol = st.number_input("Cholesterol", 150, 300, 200)
+hr = st.number_input("Max Heart Rate", 60, 200, 140)
+sugar = st.number_input("Blood Sugar", 70, 200, 110)
 
 if st.button("Predict"):
 
-    input_array = np.array(input_data).reshape(1, -1)
-    input_array = scaler.transform(input_array)
+    input_data = np.array([[age, bp, chol, hr, sugar]])
+    input_data = scaler.transform(input_data)
 
-    prediction = model.predict(input_array)[0]
-    probability = model.predict_proba(input_array)[0][prediction]
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data)[0][prediction]
 
     st.subheader("Prediction Result")
 
-    if prediction == 0:
-        st.error(f"⚠ Malignant Tumor (High Risk)\nProbability: {probability:.2f}")
+    if prediction == 1:
+        st.error(f"⚠ High Risk of Disease (Probability: {probability:.2f})")
     else:
-        st.success(f"✅ Benign Tumor (Low Risk)\nProbability: {probability:.2f}")
-
-# -----------------------------
-# Feature Importance
-# -----------------------------
-st.subheader("📈 Top Important Features")
-
-importances = model.feature_importances_
-
-feat_df = pd.DataFrame({
-    "Feature": data.feature_names,
-    "Importance": importances
-}).sort_values(by="Importance", ascending=False).head(10)
-
-fig3 = px.bar(feat_df, x="Importance", y="Feature",
-              orientation="h",
-              title="Top 10 Important Features")
-
-st.plotly_chart(fig3)
+        st.success(f"✅ Low Risk (Probability: {probability:.2f})")
